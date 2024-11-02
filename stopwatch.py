@@ -13,6 +13,11 @@ st.markdown(
         font-weight: 700 !important;
         color: #ec5953 !important;
     }
+    .unit {
+        font-size: 40px !important;
+        font-weight: 700 !important;
+        color: #ec5953 !important;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -50,6 +55,7 @@ if 'running' not in st.session_state:
     st.session_state.running = False
 if 'unit' not in st.session_state:
     st.session_state.unit, st.session_state.unitname = pick_unit()
+    st.session_state.unitname = ""
 
 
 # Stopwatch display
@@ -75,11 +81,14 @@ while True:
         current_time = datetime.now() - st.session_state.start_time + st.session_state.elapsed_time
     else:
         current_time = st.session_state.elapsed_time
-    displayed_time = "{:.6f}".format(float(current_time.total_seconds()) / st.session_state.unit)
+    displayed_time = int((current_time.total_seconds()) // st.session_state.unit)
     # Format and display elapsed time without microseconds
-    time_str = str(displayed_time) + " " + str(st.session_state.unitname)
+    time_str = str(displayed_time)
     time_display.markdown(
-        f"<p class='time'>{time_str}</p>", unsafe_allow_html=True
+        f"""<p class='time'>
+        {time_str} <span class='unit'>{st.session_state.unitname}</span>
+    </p>
+    """, unsafe_allow_html=True
     )
 
     # Refresh every 0.1 seconds

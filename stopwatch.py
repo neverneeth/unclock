@@ -1,7 +1,8 @@
-import asyncio
 import streamlit as st
 from datetime import datetime, timedelta
-
+import time
+import random
+import units
 
 # CSS Styling for the time display
 st.markdown(
@@ -17,19 +18,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Initialize session state variables for stopwatch
-if 'start_time' not in st.session_state:
-    st.session_state.start_time = None
-if 'elapsed_time' not in st.session_state:
-    st.session_state.elapsed_time = timedelta()
-if 'running' not in st.session_state:
-    st.session_state.running = False
-
 # Functions for stopwatch controls
 def start():
     if not st.session_state.running:
         st.session_state.start_time = datetime.now()
         st.session_state.running = True
+        st.session_state.unit, st.session_state.unitname = pick_unit()
 
 def stop():
     if st.session_state.running:
@@ -41,10 +35,26 @@ def reset():
     st.session_state.elapsed_time = timedelta()
     st.session_state.running = False
 
+def pick_unit():
+    unit_name = random.choice(units.unit_list)
+    unit_val = units.unit_dict.get(unit_name, 0.1)  
+    return unit_val, unit_name
+
+
+# Initialize session state variables for stopwatch
+if 'start_time' not in st.session_state:
+    st.session_state.start_time = None
+if 'elapsed_time' not in st.session_state:
+    st.session_state.elapsed_time = timedelta()
+if 'running' not in st.session_state:
+    st.session_state.running = False
+if 'unit' not in st.session_state:
+    st.session_state.unit, st.session_state.unitname = pick_unit()
+
+
 # Stopwatch display
 time_display = st.empty()
 col1, col2, col3 = st.columns(3)
-
 # Button controls
 with col1:
     if st.button("Start"):
@@ -56,21 +66,21 @@ with col3:
     if st.button("Reset"):
         reset()
 
-# Async function to update the stopwatch display
-async def update_display():
-    while True:
-        if st.session_state.running:
-            current_time = datetime.now() - st.session_state.start_time + st.session_state.elapsed_time
-        else:
-            current_time = st.session_state.elapsed_time
 
-        # Format and display elapsed time
-        time_str = str(current_time).split(".")[0]  # Remove microseconds
-        time_display.markdown(
-            f"<p class='time'>{time_str}</p>", unsafe_allow_html=True
-        )
 
-        await asyncio.sleep(0.1)  # Update every 0.1 seconds
+# Update the stopwatch display in real-time
+while True:
+    if st.session_state.running:
+        # Calculate current elapsed time
+        current_time = datetime.now() - st.session_state.start_time + st.session_state.elapsed_time
+    else:
+        current_time = st.session_state.elapsed_time
+    displayed_time = "{:.6f}".format(float(current_time.total_seconds()) / st.session_state.unit)
+    # Format and display elapsed time without microseconds
+    time_str = str(displayed_time) + " " + str(st.session_state.unitname)
+    time_display.markdown(
+        f"<p class='time'>{time_str}</p>", unsafe_allow_html=True
+    )
 
-# Run the async update_display function
-asyncio.run(update_display())
+    # Refresh every 0.1 seconds
+    time.sleep(0.5)

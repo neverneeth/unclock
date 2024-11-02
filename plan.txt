@@ -5,7 +5,4 @@ World Clock: Whenever the Add button is clicked Realtime of a random location in
 Stopwatch : A stopwatch that has absurd units of time whenever its used
 Timer: A timer whose accuracy would completely vary with the weather(Sunny - Closely accurate, rainy - Not at all accurate)
 Alarm: At random intervals between set time and ring time, the alarm will ring to confirm whether it was asked to ring at the ring time 
-but would only sent a notification(silent) at giot ring time
-
-
-Asda
+but would only sent a notification(silent) at ring time

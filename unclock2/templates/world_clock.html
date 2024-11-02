@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Clock - UnClock App</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #222;
+            color: #00FF00;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            margin: 20px 0;
+            text-shadow: 0 0 10px #00FF00;
+        }
+
+        #controls {
+            margin: 20px 0;
+        }
+
+        button {
+            background-color: #444;
+            color: #00FF00;
+            border: 1px solid #00FF00;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #00FF00;
+            color: #222;
+        }
+
+        #clocks {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .clock {
+            border: 1px solid #00FF00;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 10px;
+            flex: 1 1 calc(20% - 10px);
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        h4 {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        canvas {
+            display: block;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .digital-time {
+            text-align: center;
+            font-size: 20px;
+            margin-top: 10px;
+            text-shadow: 0 0 5px #00FF00;
+        }
+    </style>
+</head>
+<body>
+
+<h1>World Clock - UnClock App</h1>
+
+<div id="controls">
+    <button id="add-clock">Add Random World Clock</button>
+</div>
+
+<div id="clocks"></div>
+
+<a href="/select">Back to Feature Selection</a>
+
+<script>
+$(document).ready(function() {
+    $("#add-clock").click(function() {
+        $.post("/add_clock", function(data) {
+            if (data.success) {
+                const timezone = data.timezone;
+                const coordinates = data.coordinates;
+
+                if ($("#clocks .clock").length >= 5) {
+                    $("#clocks .clock").first().remove();
+                }
+
+                $("#clocks").append(`
+                    <div class="clock" id="clock-${timezone}">
+                        <h4>${coordinates}</h4>
+                        <canvas id="canvas-${timezone}" width="150" height="150"></canvas>
+                        <div class="digital-time" id="digital-${timezone}"></div>
+                    </div>
+                `);
+
+                startAnalogClock(`canvas-${timezone}`, timezone);
+            }
+        });
+    });
+
+    function startAnalogClock(canvasId, timezone) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+
+        function drawClock() {
+            const now = new Date();
+            const localTime = new Date(now.toLocaleString("en-US", { timeZone: timezone }));
+            const hours = localTime.getHours();
+            const minutes = localTime.getMinutes();
+            const seconds = localTime.getSeconds();
+
+            document.getElementById(`digital-${timezone}`).innerText = 
+                localTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.beginPath();
+            ctx.arc(75, 75, 70, 0, Math.PI * 2);
+            ctx.fillStyle = "#000";
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.font = "bold 12px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            for (let i = 1; i <= 12; i++) {
+                const angle = (i * Math.PI) / 6;
+                const x = 75 + Math.cos(angle) * 60; 
+                const y = 75 + Math.sin(angle) * 60;
+                ctx.fillStyle = "#00FF00";
+                ctx.fillText(i, x, y);
+            }
+
+            ctx.save();
+            ctx.translate(75, 75);
+            ctx.rotate(((hours % 12) + minutes / 60) * (Math.PI / 6));
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -30);
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#00FF00';
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(75, 75);
+            ctx.rotate((minutes + seconds / 60) * (Math.PI / 30));
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -50);
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = '#00FF00';
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(75, 75);
+            ctx.rotate(seconds * (Math.PI / 30));
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -60);
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        drawClock();
+        setInterval(drawClock, 1000);
+    }
+});
+</script>
+
+</body>
+</html>
